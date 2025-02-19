@@ -1,0 +1,73 @@
+clc;
+clear;
+close all;
+N = 100;
+x1 = randn(1, N) ;  
+y1 = randn(1, N) ;
+cluster1 = [x1; y1];
+x2 = randn(1, N) ;  
+y2 = randn(1, N) ;
+cluster2 = [x2; y2];
+data = [cluster1, cluster2]; 
+figure();
+hold on ;
+scatter(data(1, :), data(2,:), 30, 'ro', 'filled');
+hold off;
+means = [4, 5; 7, 8]; 
+variance1 = [1, 0; 0, 1];  
+variance2 = [2, 0; 0, 2];  
+iter = 0;
+max_iter = 100;
+epsilon = 1e-4; 
+while iter < max_iter
+    iter = iter + 1;
+    means_old = means;
+    variance1_old = variance1;
+    variance2_old = variance2;
+    gamma = zeros(2 * N, 2); 
+    for i = 1:2*N
+        diff1 = (data(:, i) - means(1, :)');
+        prob1 = (1 / sqrt(det(2 * pi * variance1))) * exp(-0.5 * diff1' / variance1 * diff1);
+        diff2 = (data(:, i) - means(2, :)');
+        prob2 = (1 / sqrt(det(2 * pi * variance2))) * exp(-0.5 * diff2' / variance2 * diff2);
+        gamma(i, 1) = prob1 / (prob1 + prob2);
+        gamma(i, 2) = prob2 / (prob1 + prob2);
+    end
+    Nk1 = sum(gamma(:, 1));
+    Nk2 = sum(gamma(:, 2));
+    means(1, :) = (data * gamma(:, 1))' / Nk1;  
+    means(2, :) = (data * gamma(:, 2))' / Nk2;  
+    variance1 = zeros(2, 2);
+    variance2 = zeros(2, 2);
+    
+    for i = 1:2*N
+        diff1 = (data(:, i) - means(1, :)');
+        variance1 = variance1 + gamma(i, 1) * (diff1 * diff1');
+        
+        diff2 = (data(:, i) - means(2, :)');
+        variance2 = variance2 + gamma(i, 2) * (diff2 * diff2');
+    end
+    
+    variance1 = variance1 / Nk1;
+    variance2 = variance2 / Nk2;
+    mean_change = norm(means - means_old, 'fro');
+    var_change1 = norm(variance1 - variance1_old, 'fro');
+    var_change2 = norm(variance2 - variance2_old, 'fro');
+    
+    if mean_change < epsilon && var_change1 < epsilon && var_change2 < epsilon
+        break;
+    end
+end
+figure;
+hold on;
+[~, cluster_labels] = max(gamma, [], 2);
+scatter(data(1, cluster_labels == 1), data(2, cluster_labels == 1), 30, 'ro', 'filled');
+scatter(data(1, cluster_labels == 2), data(2, cluster_labels == 2), 30, 'b^', 'filled');
+plot(means(:, 1), means(:, 2), 'kx', 'MarkerSize', 15, 'LineWidth', 3);
+title('Expectation-Maximization (EM) Clustering');
+xlabel('X-axis');
+ylabel('Y-axis');
+legend('Cluster 1', 'Cluster 2', 'Estimated Means');
+grid on;
+hold off;
+fprintf('Converged in %d iterations\n', iter);
