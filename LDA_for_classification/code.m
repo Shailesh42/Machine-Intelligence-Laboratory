@@ -8,8 +8,8 @@ class0 = data(:, output == 0);
 overall_mean = mean(data, 2);
 mean1 = mean(class1, 2);
 mean0 = mean(class0, 2);
-cov_class1 = (class1 - mean1) * (class1 - mean1)' / size(class1, 2);
-cov_class0 = (class0 - mean0) * (class0 - mean0)' / size(class0, 2);
+cov_class1 = (class1 - overall_mean) * (class1 - overall_mean)' / size(class1, 2);
+cov_class0 = (class0 - overall_mean) * (class0 - overall_mean)' / size(class0, 2);
 prior1 = sum(output == 1) / length(output);
 prior0 = sum(output == 0) / length(output);
 
